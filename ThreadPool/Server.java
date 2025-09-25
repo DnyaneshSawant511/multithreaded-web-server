@@ -11,7 +11,7 @@ import java.util.concurrent.Executors;
 public class Server {
 
     private static final int PORT = 8010;
-    private static final int POOL_SIZE = 10; 
+    private static final int POOL_SIZE = 30; 
     private static final String WEB_ROOT = "../www";
 
     private final ExecutorService executor = Executors.newFixedThreadPool(POOL_SIZE);
