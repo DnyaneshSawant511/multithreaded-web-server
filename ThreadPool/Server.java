@@ -24,7 +24,6 @@ public class Server {
         try (ServerSocket serverSocket = new ServerSocket(PORT)) {
 
             serverSocket.setSoTimeout(10000);
-
             System.out.println("HTTP Server running on port " + PORT);
 
             while (true) {
@@ -40,9 +39,8 @@ public class Server {
 
     private void handleClient(Socket clientSocket) {
         try (BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-             OutputStream out = clientSocket.getOutputStream()) {
+            OutputStream out = clientSocket.getOutputStream()) {
 
-            // Parse request
             String requestLine = in.readLine();
             if (requestLine == null || requestLine.isEmpty()) return;
 
@@ -50,14 +48,12 @@ public class Server {
             String method = tokens[0];
             String path = tokens[1];
 
-            // Only GET supported for now
             if (!method.equals("GET")) {
                 sendResponse(out, "405 Method Not Allowed", "text/plain", "Only GET supported".getBytes());
                 log(clientSocket, path, 405);
                 return;
             }
 
-            // Map endpoints to files
             String filePath;
             switch (path) {
                 case "/":
@@ -70,15 +66,14 @@ public class Server {
                     filePath = WEB_ROOT + "/contact.html";
                     break;
                 default:
-                    filePath = WEB_ROOT + path; // try static file
+                    filePath = WEB_ROOT + path;
             }
-
-            //System.out.println(filePath);
 
             File file = new File(filePath);
             if (file.exists() && !file.isDirectory()) {
                 byte[] content = Files.readAllBytes(Paths.get(filePath));
-                sendResponse(out, "200 OK", "text/html", content);
+                String mimeType = getMimeType(filePath);
+                sendResponse(out, "200 OK", mimeType, content);
                 log(clientSocket, path, 200);
             } else {
                 String notFound = "<h1>404 Not Found</h1>";
@@ -111,5 +106,29 @@ public class Server {
         String time = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
         String clientIp = client.getInetAddress().getHostAddress();
         System.out.printf("[%s] %s requested %s -> %d%n", time, clientIp, path, status);
+    }
+
+    private String getMimeType(String filePath) {
+        if (filePath.endsWith(".html") || filePath.endsWith(".htm")) {
+            return "text/html";
+        } else if (filePath.endsWith(".css")) {
+            return "text/css";
+        } else if (filePath.endsWith(".js")) {
+            return "application/javascript";
+        } else if (filePath.endsWith(".png")) {
+            return "image/png";
+        } else if (filePath.endsWith(".jpg") || filePath.endsWith(".jpeg")) {
+            return "image/jpeg";
+        } else if (filePath.endsWith(".gif")) {
+            return "image/gif";
+        } else if (filePath.endsWith(".svg")) {
+            return "image/svg+xml";
+        } else if (filePath.endsWith(".json")) {
+            return "application/json";
+        } else if (filePath.endsWith(".ico")) {
+            return "image/x-icon";
+        } else {
+            return "application/octet-stream";
+        }
     }
 }
