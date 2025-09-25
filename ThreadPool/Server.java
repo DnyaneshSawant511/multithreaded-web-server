@@ -71,7 +71,19 @@ public class Server {
 
             File file = new File(filePath);
             if (file.exists() && !file.isDirectory()) {
-                byte[] content = Files.readAllBytes(Paths.get(filePath));
+                //byte[] content = Files.readAllBytes(Paths.get(filePath));
+                
+                byte[] content;
+                // Check if file is in cache
+                if (Cache.contains(filePath)) {
+                    content = Cache.get(filePath);
+                    System.out.println("Cache HIT: " + filePath);
+                } else {
+                    content = Files.readAllBytes(Paths.get(filePath));
+                    Cache.put(filePath, content);
+                    System.out.println("Cache MISS: " + filePath);
+                }
+
                 String mimeType = getMimeType(filePath);
                 sendResponse(out, "200 OK", mimeType, content);
                 log(clientSocket, path, 200);
